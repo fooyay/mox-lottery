@@ -1,12 +1,16 @@
-from src import Counter
+from contracts import Lottery
 from moccasin.boa_tools import VyperContract
 
+TICKET_PRICE = 0.001  # in ETH
+DECIMALS = 18
+
+
 def deploy() -> VyperContract:
-    counter: VyperContract = Counter.deploy()
-    print("Starting count: ", counter.number())
-    counter.increment()
-    print("Ending count: ", counter.number())
-    return counter
+    ticket_price_in_wei = int(TICKET_PRICE * 10**DECIMALS)
+    lottery: VyperContract = Lottery.deploy(ticket_price_in_wei)
+
+    return lottery
+
 
 def moccasin_main() -> VyperContract:
     return deploy()
