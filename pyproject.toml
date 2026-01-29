@@ -1,12 +1,12 @@
 [project]
-name = "moccasin_project"
+name = "mox_lottery"
 version = "0.1.0"
-description = "Add your description here"
+description = "A basic lottery smart contract, built using Vyper and Moccasin."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = []
 
-[tool.moccasin]
+[tool.moccasin.project]
 src = "contracts"
 
 [tool.moccasin.networks.pyevm]
