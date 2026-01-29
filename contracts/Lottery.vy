@@ -6,18 +6,37 @@
 @notice This contract creates and runs a simple lottery.
 """
 
-# store the ticket price
+# store the ticket price (immutable)
+# store the fee per ticket (immutable)
+# store the owner of the contract (immutable)
 # store the list of participants
-# store the owner of the contract
+# store the accumulated fees
+
+ticket_price: public(immutable(uint256))
+fee: public(immutable(uint256))
+owner: public(immutable(address))
 
 
-# initialize the contract and set the owner and ticket price
+# initialize the contract and set the owner, ticket price, and fee
 # set price to 0.001 ETH in the deploy script
+
+@deploy
+def __init__(_ticket_price: uint256, _fee: uint256):
+    assert _ticket_price > 0
+    ticket_price = _ticket_price
+    fee = _fee
+    owner = msg.sender
 
 def enter_lottery():
     """
     @notice Enter the lottery by sending the ticket price.
     """
+    # check if the sent value is equal to the ticket price, else revert
+
+    # increment accumulated fees
+
+    # add the sender to the participants list
+
     pass
 
 def pick_winner():
@@ -25,6 +44,15 @@ def pick_winner():
     @notice Pick a random winner from the participants.
     @dev This function can only be called by the contract owner.
     """
+    # handle the case of no participants
+
+    # check if enough time has passed
+
+    # randomly select a winner from the participants
+
+    # send the winnings to the winner minus the fee
+
+    # reset the participants list for the next round
     pass
 
 def admin_withdraw_fees():
