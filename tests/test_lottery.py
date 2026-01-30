@@ -62,3 +62,8 @@ def test_show_lottery_balance(funded_lottery, random_user):
     ) * NUM_ENTRIES
     with boa.env.prank(random_user):
         assert funded_lottery.lottery_balance() == expected_balance
+
+
+def test_wont_pick_winner_with_no_participants(lottery_contract):
+    with boa.reverts("No participants in the lottery"):
+        lottery_contract.pick_winner()

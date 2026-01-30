@@ -44,12 +44,14 @@ def enter_lottery():
 
     pass
 
+@external
 def pick_winner():
     """
     @notice Pick a random winner from the participants.
     @dev This function can only be called by the contract owner.
     """
     # handle the case of no participants
+    assert len(self.participants) > 0, "No participants in the lottery"
 
     # check if enough time has passed
 
