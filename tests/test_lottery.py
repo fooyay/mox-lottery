@@ -67,3 +67,16 @@ def test_show_lottery_balance(funded_lottery, random_user):
 def test_wont_pick_winner_with_no_participants(lottery_contract):
     with boa.reverts("No participants in the lottery"):
         lottery_contract.pick_winner()
+
+
+def test_not_enough_time_passed(funded_lottery):
+    with boa.reverts("Not enough time has passed"):
+        funded_lottery.pick_winner()
+
+
+def test_enough_time_has_passed(funded_lottery):
+    # Advance time by at least MIN_DURATION seconds
+    boa.env.time_travel(funded_lottery.MIN_DURATION() + 1)
+
+    # Now picking a winner should not revert
+    funded_lottery.pick_winner()
