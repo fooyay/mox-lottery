@@ -1,4 +1,3 @@
-import random
 import boa
 
 from script.deploy import DECIMALS, TICKET_PRICE, TICKET_FEE
@@ -55,3 +54,11 @@ def test_fees_accumulate_correctly(funded_lottery):
 def test_user_can_see_number_of_participants(funded_lottery, random_user):
     with boa.env.prank(random_user):
         assert funded_lottery.get_number_of_participants() == NUM_ENTRIES
+
+
+def test_show_lottery_balance(funded_lottery, random_user):
+    expected_balance: int = (
+        funded_lottery.ticket_price() - funded_lottery.fee()
+    ) * NUM_ENTRIES
+    with boa.env.prank(random_user):
+        assert funded_lottery.lottery_balance() == expected_balance
