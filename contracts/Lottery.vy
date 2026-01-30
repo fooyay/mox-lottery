@@ -6,9 +6,7 @@
 @notice This contract creates and runs a simple lottery.
 """
 
-# store the ticket price (immutable)
-# store the fee per ticket (immutable)
-# store the owner of the contract (immutable)
+
 # store the list of participants
 # store the accumulated fees
 
@@ -27,11 +25,14 @@ def __init__(_ticket_price: uint256, _fee: uint256):
     fee = _fee
     owner = msg.sender
 
+@payable
+@external
 def enter_lottery():
     """
     @notice Enter the lottery by sending the ticket price.
     """
     # check if the sent value is equal to the ticket price, else revert
+    assert msg.value == ticket_price, "Incorrect ticket price sent"
 
     # increment accumulated fees
 
