@@ -7,17 +7,15 @@
 """
 
 
-# store the list of participants
-# store the accumulated fees
 
 ticket_price: public(immutable(uint256))
 fee: public(immutable(uint256))
 owner: public(immutable(address))
 accumulated_fees: uint256
+participants: DynArray[address, 1000]  # max 1000 participants per round
+lottery_balance: public(uint256)
 
 
-# initialize the contract and set the owner, ticket price, and fee
-# set price to 0.001 ETH in the deploy script
 
 @deploy
 def __init__(_ticket_price: uint256, _fee: uint256):
@@ -39,8 +37,10 @@ def enter_lottery():
 
     # increment accumulated fees
     self.accumulated_fees += fee
+    self.lottery_balance += ticket_price - fee
 
     # add the sender to the participants list
+    self.participants.append(msg.sender)
 
     pass
 
@@ -58,6 +58,8 @@ def pick_winner():
     # send the winnings to the winner minus the fee
 
     # reset the participants list for the next round
+    # reset the lottery balance
+
     pass
 
 def admin_withdraw_fees():
@@ -75,6 +77,18 @@ def get_fees() -> uint256:
     """
     assert msg.sender == owner, "Only owner can view fees"
     return self.accumulated_fees
+
+
+@external
+def get_number_of_participants() -> uint256:
+    """
+    @notice Get the current number of participants in the lottery.
+    @return The number of participants.
+    """
+    return len(self.participants)
+    
+
+
 
 def _send_winnings(winner: address, amount: uint256):
     """

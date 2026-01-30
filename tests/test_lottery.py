@@ -1,8 +1,8 @@
+import random
 import boa
 
 from script.deploy import DECIMALS, TICKET_PRICE, TICKET_FEE
-
-RANDOM_USER = boa.env.generate_address("random_user")
+from tests.conftest import NUM_ENTRIES
 
 
 def test_ticket_price_is_set(lottery_contract):
@@ -26,19 +26,19 @@ def test_revert_if_no_eth_sent(lottery_contract):
         lottery_contract.enter_lottery(value=0)
 
 
-def test_user_cannot_show_fees(lottery_contract):
-    with boa.env.prank(RANDOM_USER):
+def test_user_cannot_show_fees(lottery_contract, random_user):
+    with boa.env.prank(random_user):
         with boa.reverts("Only owner can view fees"):
             lottery_contract.get_fees()
 
 
-def test_owner_can_view_fees(lottery_contract):
+def test_owner_can_view_fees(lottery_contract, random_user):
     # Initially, fees should be zero
     assert lottery_contract.get_fees() == 0
 
     # Simulate a user entering the lottery
-    boa.env.set_balance(RANDOM_USER, int(TICKET_PRICE * 10**DECIMALS * 2))
-    with boa.env.prank(RANDOM_USER):
+    boa.env.set_balance(random_user, int(TICKET_PRICE * 10**DECIMALS * 2))
+    with boa.env.prank(random_user):
         lottery_contract.enter_lottery(value=lottery_contract.ticket_price())
 
     # Now, the accumulated fees should equal the ticket fee
@@ -46,15 +46,12 @@ def test_owner_can_view_fees(lottery_contract):
     assert lottery_contract.get_fees() == expected_fees
 
 
-def test_fees_accumulate_correctly(lottery_contract):
-    # Simulate multiple users entering the lottery
-    num_entries = 3
-    for i in range(num_entries):
-        user = boa.env.generate_address(f"user_{i}")
-        boa.env.set_balance(user, int(TICKET_PRICE * 10**DECIMALS * 2))
-        with boa.env.prank(user):
-            lottery_contract.enter_lottery(value=lottery_contract.ticket_price())
-
+def test_fees_accumulate_correctly(funded_lottery):
     # The accumulated fees should equal the ticket fee multiplied by the number of entries
-    expected_fees = lottery_contract.fee() * num_entries
-    assert lottery_contract.get_fees() == expected_fees
+    expected_fees: int = funded_lottery.fee() * NUM_ENTRIES
+    assert funded_lottery.get_fees() == expected_fees
+
+
+def test_user_can_see_number_of_participants(funded_lottery, random_user):
+    with boa.env.prank(random_user):
+        assert funded_lottery.get_number_of_participants() == NUM_ENTRIES
