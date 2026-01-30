@@ -30,3 +30,17 @@ def test_user_cannot_show_fees(lottery_contract):
     with boa.env.prank(RANDOM_USER):
         with boa.reverts("Only owner can view fees"):
             lottery_contract.get_fees()
+
+
+def test_owner_can_view_fees(lottery_contract):
+    # Initially, fees should be zero
+    assert lottery_contract.get_fees() == 0
+
+    # Simulate a user entering the lottery
+    boa.env.set_balance(RANDOM_USER, int(TICKET_PRICE * 10**DECIMALS * 2))
+    with boa.env.prank(RANDOM_USER):
+        lottery_contract.enter_lottery(value=lottery_contract.ticket_price())
+
+    # Now, the accumulated fees should equal the ticket fee
+    expected_fees = lottery_contract.fee()
+    assert lottery_contract.get_fees() == expected_fees
