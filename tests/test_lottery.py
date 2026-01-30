@@ -1,3 +1,4 @@
+from toolz import first
 import boa
 
 from script.deploy import DECIMALS, TICKET_PRICE, TICKET_FEE
@@ -80,3 +81,15 @@ def test_enough_time_has_passed(funded_lottery):
 
     # Now picking a winner should not revert
     funded_lottery.pick_winner()
+
+
+def test_random_number(lottery_contract):
+    limit: int = 100
+    matches: int = 0
+    first_random_number: int = lottery_contract.test_random(limit)
+    for _i in range(100):
+        next_random_number: int = lottery_contract.test_random(limit)
+        if next_random_number == first_random_number:
+            matches += 1
+
+    assert matches < 20  # ensure randomness is reasonably good

@@ -15,6 +15,7 @@ accumulated_fees: uint256
 participants: DynArray[address, 1000]  # max 1000 participants per round
 lottery_balance: public(uint256)
 lottery_start_time: public(uint256)
+random_nonce: uint256
 
 
 
@@ -59,9 +60,10 @@ def pick_winner():
     assert block.timestamp >= self.lottery_start_time + MIN_DURATION, "Not enough time has passed"
 
     # randomly select a winner from the participants
+    winner_index: uint256 = self._get_random_number(len(self.participants))
 
     # send the winnings to the winner minus the fee
-
+    # winner: address = self.participants[winner_index]
     # reset the participants list for the next round
     # reset the lottery balance
 
@@ -109,4 +111,23 @@ def _get_random_number(limit: uint256) -> uint256:
     @param limit The upper limit for the random number.
     @return A pseudo-random number between 0 and limit - 1.
     """
-    return 0  # placeholder
+    self.random_nonce += 1
+    n: bytes32 = keccak256(
+        concat(
+            convert(block.timestamp, bytes32),
+            convert(block.number, bytes32),
+            convert(self.random_nonce, bytes32),
+            convert(msg.sender, bytes32),
+        )
+    )
+    return convert(n, uint256) % limit
+
+@external
+def test_random(limit: uint256) -> uint256:
+    """
+    @notice Test function to get a pseudo-random number.
+    @param limit The upper limit for the random number.
+    @return A pseudo-random number between 0 and limit - 1.
+    """
+    assert msg.sender == owner, "Only owner can test randomness"
+    return self._get_random_number(limit)
