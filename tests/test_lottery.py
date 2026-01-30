@@ -20,5 +20,5 @@ def test_revert_if_incorrect_ticket_price_sent(lottery_contract):
 
 
 def test_revert_if_no_eth_sent(lottery_contract):
-    with boa.reverts("Incorrect ticket price fsent"):
+    with boa.reverts("Incorrect ticket price sent"):
         lottery_contract.enter_lottery(value=0)
