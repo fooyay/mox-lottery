@@ -44,3 +44,17 @@ def test_owner_can_view_fees(lottery_contract):
     # Now, the accumulated fees should equal the ticket fee
     expected_fees = lottery_contract.fee()
     assert lottery_contract.get_fees() == expected_fees
+
+
+def test_fees_accumulate_correctly(lottery_contract):
+    # Simulate multiple users entering the lottery
+    num_entries = 3
+    for i in range(num_entries):
+        user = boa.env.generate_address(f"user_{i}")
+        boa.env.set_balance(user, int(TICKET_PRICE * 10**DECIMALS * 2))
+        with boa.env.prank(user):
+            lottery_contract.enter_lottery(value=lottery_contract.ticket_price())
+
+    # The accumulated fees should equal the ticket fee multiplied by the number of entries
+    expected_fees = lottery_contract.fee() * num_entries
+    assert lottery_contract.get_fees() == expected_fees
