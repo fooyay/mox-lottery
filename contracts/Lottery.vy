@@ -13,6 +13,7 @@
 ticket_price: public(immutable(uint256))
 fee: public(immutable(uint256))
 owner: public(immutable(address))
+accumulated_fees: uint256
 
 
 # initialize the contract and set the owner, ticket price, and fee
@@ -21,9 +22,11 @@ owner: public(immutable(address))
 @deploy
 def __init__(_ticket_price: uint256, _fee: uint256):
     assert _ticket_price > 0
+    assert _ticket_price > _fee
     ticket_price = _ticket_price
     fee = _fee
     owner = msg.sender
+    self.accumulated_fees = 0
 
 @payable
 @external
@@ -35,6 +38,7 @@ def enter_lottery():
     assert msg.value == ticket_price, "Incorrect ticket price sent"
 
     # increment accumulated fees
+    self.accumulated_fees += fee
 
     # add the sender to the participants list
 
@@ -62,6 +66,15 @@ def admin_withdraw_fees():
     @dev This function can only be called by the contract owner.
     """
     pass
+
+@external
+def get_fees() -> uint256:
+    """
+    @notice Get the current accumulated fees.
+    @return The amount of accumulated fees.
+    """
+    assert msg.sender == owner, "Only owner can view fees"
+    return self.accumulated_fees
 
 def _send_winnings(winner: address, amount: uint256):
     """

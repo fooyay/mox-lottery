@@ -2,6 +2,12 @@
 
 🐍 This is a basic lottery smart contract, built using Vyper and Moccasin.
 
+## Features
+### Deployment
+The ticket price and fee are set at deployment time. Adjust the values in `script/deploy.py` before deploying.
+The values are based in ETH.
+
+
 ## Quickstart
 
 1. Deploy to a fake local network that titanoboa automatically spins up!
@@ -16,7 +22,7 @@ mox run deploy
 mox test
 ```
 
-## Features
+## Plan to implement the following features:
 - determine the ticket price
 - have a function `enter_lottery` that allows users to enter the lottery by sending some ETH
 - have a function `pick_winner` that can be called by the contract owner to pick a random winner from the participants
