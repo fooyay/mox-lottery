@@ -1,4 +1,3 @@
-from toolz import first
 import boa
 
 from script.deploy import DECIMALS, TICKET_PRICE, TICKET_FEE
@@ -77,7 +76,7 @@ def test_not_enough_time_passed(funded_lottery):
 
 def test_enough_time_has_passed(funded_lottery):
     # Advance time by at least MIN_DURATION seconds
-    boa.env.time_travel(funded_lottery.MIN_DURATION() + 1)
+    boa.env.time_travel(funded_lottery.min_duration() + 1)
 
     # Now picking a winner should not revert
     funded_lottery.pick_winner()

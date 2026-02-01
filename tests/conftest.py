@@ -1,4 +1,3 @@
-import re
 import pytest
 from script.deploy import deploy_lottery, TICKET_PRICE, DECIMALS
 import boa

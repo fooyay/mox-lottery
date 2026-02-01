@@ -7,9 +7,9 @@
 """
 
 
-MIN_DURATION: public(constant(uint256)) = 60  # minimum duration between lotteries in seconds
 ticket_price: public(immutable(uint256))
 fee: public(immutable(uint256))
+min_duration: public(immutable(uint256))
 owner: public(immutable(address))
 accumulated_fees: uint256
 participants: DynArray[address, 1000]  # max 1000 participants per round
@@ -20,7 +20,15 @@ random_nonce: uint256
 
 
 @deploy
-def __init__(_ticket_price: uint256, _fee: uint256):
+def __init__(_ticket_price: uint256, _fee: uint256, _min_duration: uint256):
+    """
+    @notice Constructor to initialize the lottery contract.
+    @param _ticket_price The price of a lottery ticket.
+    @param _fee The fee taken from each ticket purchase.
+    @param _min_duration The minimum duration before picking a winner.
+    """
+    assert _min_duration >= 60  # at least 1 minute
+    min_duration = _min_duration
     assert _ticket_price > 0
     assert _ticket_price > _fee
     ticket_price = _ticket_price
@@ -57,7 +65,7 @@ def pick_winner():
     assert len(self.participants) > 0, "No participants in the lottery"
 
     # check if enough time has passed
-    assert block.timestamp >= self.lottery_start_time + MIN_DURATION, "Not enough time has passed"
+    assert block.timestamp >= self.lottery_start_time + min_duration, "Not enough time has passed"
 
     # randomly select a winner from the participants
     winner_index: uint256 = self._get_random_number(len(self.participants))
