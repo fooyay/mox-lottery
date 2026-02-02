@@ -92,3 +92,10 @@ def test_random_number(lottery_contract):
             matches += 1
 
     assert matches < 20  # ensure randomness is reasonably good
+
+
+def test_random_number_range(lottery_contract):
+    limit: int = 7
+    for _ in range(100):
+        random_number: int = lottery_contract.test_random(limit)
+        assert 0 <= random_number < limit
