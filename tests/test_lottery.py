@@ -1,3 +1,5 @@
+from toolz import last
+from IPython.terminal.pt_inputhooks.osx import n
 import boa
 
 from script.deploy import DECIMALS, TICKET_PRICE, TICKET_FEE
@@ -99,3 +101,54 @@ def test_random_number_range(lottery_contract):
     for _ in range(100):
         random_number: int = lottery_contract.test_random(limit)
         assert 0 <= random_number < limit
+
+
+def test_lottery_initial_values(lottery_contract):
+    assert lottery_contract.get_number_of_participants() == 0
+    assert lottery_contract.lottery_balance() == 0
+
+
+def test_lottery_reset_after_winner(funded_lottery):
+    assert funded_lottery.get_number_of_participants() == NUM_ENTRIES
+    assert funded_lottery.lottery_balance() > 0
+
+    # Advance time by at least MIN_DURATION seconds
+    boa.env.time_travel(funded_lottery.min_duration() + 1)
+
+    # Pick a winner
+    funded_lottery.pick_winner()
+
+    # After picking a winner, the participants list should be empty and lottery balance should be zero
+    assert funded_lottery.get_number_of_participants() == 0
+    assert funded_lottery.lottery_balance() == 0
+
+
+def test_winner_receives_correct_amount(funded_lottery):
+    # Advance time by at least MIN_DURATION seconds
+    boa.env.time_travel(funded_lottery.min_duration() + 1)
+
+    # Store participant addresses and their balances before picking a winner
+    num_participants: int = funded_lottery.get_number_of_participants()
+    participant_addresses = [
+        funded_lottery.participants(i) for i in range(num_participants)
+    ]
+    balances_before = {
+        addr: boa.env.get_balance(addr) for addr in participant_addresses
+    }
+
+    # Pick a winner
+    funded_lottery.pick_winner()
+
+    # Calculate expected winning amount
+    winner = funded_lottery.last_winner()
+    last_winning_amount = funded_lottery.last_winning_amount()
+
+    for addr in participant_addresses:
+        if addr != winner:
+            # Ensure non-winners' balances remain unchanged
+            assert boa.env.get_balance(addr) - balances_before[addr] == 0
+        else:
+            # Ensure winner's balance increased by the correct winning amount
+            assert (
+                boa.env.get_balance(addr) - balances_before[addr] == last_winning_amount
+            )

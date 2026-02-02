@@ -12,10 +12,14 @@ fee: public(immutable(uint256))
 min_duration: public(immutable(uint256))
 owner: public(immutable(address))
 accumulated_fees: uint256
-participants: DynArray[address, 1000]  # max 1000 participants per round
+participants: public(DynArray[address, 1000])  # max 1000 participants per round
 lottery_balance: public(uint256)
 lottery_start_time: public(uint256)
 random_nonce: uint256
+
+last_winner: public(address)
+last_winning_amount: public(uint256)
+
 
 
 
@@ -70,12 +74,16 @@ def pick_winner():
     # randomly select a winner from the participants
     winner_index: uint256 = self._get_random_number(len(self.participants))
 
+    _winner: address = self.participants[winner_index]
+    _winning_amount: uint256 = self.lottery_balance
+
     # send the winnings to the winner minus the fee
-    # winner: address = self.participants[winner_index]
+    self._send_winnings(_winner, _winning_amount)
     # reset the participants list for the next round
     # reset the lottery balance
 
-    pass
+    self._reset_lottery(_winner, _winning_amount)
+
 
 def admin_withdraw_fees():
     """
@@ -83,6 +91,7 @@ def admin_withdraw_fees():
     @dev This function can only be called by the contract owner.
     """
     pass
+
 
 @external
 def get_fees() -> uint256:
@@ -103,15 +112,28 @@ def get_number_of_participants() -> uint256:
     return len(self.participants)
     
 
+def _send_winnings(_winner: address, _amount: uint256):
+    """
+    @notice Internal function to send winnings to the winner and reset the lottery.
+    @param _winner The address of the winner.
+    @param _amount The amount to send to the winner.
+    """
+    # send the amount to the winner
+    raw_call(_winner, b"", value=_amount)
 
 
-def _send_winnings(winner: address, amount: uint256):
+def _reset_lottery(_winner: address, _amount: uint256):
     """
-    @notice Internal function to send winnings to the winner.
-    @param winner The address of the winner.
-    @param amount The amount to send to the winner.
+    @notice Internal function to reset the lottery state after picking a winner.
+    @param _winner The address of the winner.
+    @param _amount The amount won by the winner.
     """
-    pass
+    self.lottery_start_time = block.timestamp
+    self.last_winner = _winner
+    self.last_winning_amount = _amount
+    self.participants = []
+    self.lottery_balance = 0
+    
 
 def _get_random_number(limit: uint256) -> uint256:
     """
