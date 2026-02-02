@@ -152,3 +152,22 @@ def test_winner_receives_correct_amount(funded_lottery):
             assert (
                 boa.env.get_balance(addr) - balances_before[addr] == last_winning_amount
             )
+
+
+def test_non_owner_cannot_withdraw_fees(funded_lottery, random_user):
+    with boa.env.prank(random_user):
+        with boa.reverts("Only owner can withdraw fees"):
+            funded_lottery.admin_withdraw_fees()
+
+
+def test_owner_can_withdraw_fees(funded_lottery):
+    with boa.env.prank(boa.env.eoa):
+        initial_owner_balance: int = boa.env.get_balance(boa.env.eoa)
+        accumulated_fees: int = funded_lottery.get_fees()
+
+        funded_lottery.admin_withdraw_fees()
+
+        final_owner_balance: int = boa.env.get_balance(boa.env.eoa)
+
+        assert final_owner_balance - initial_owner_balance == accumulated_fees
+        assert funded_lottery.get_fees() == 0

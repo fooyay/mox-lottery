@@ -23,6 +23,12 @@ Users can check the current lottery balance (total amount collected from ticket 
 ### Picking a Winner
 Anyone may call the `pick_winner` function to randomly select a winner from the participants, but only if enough time has passed since the last lottery started (as defined by the minimum duration set during deployment).
 
+If enough time has not passed, the function will revert with an error message.
+
+If enough time has passed, the winner receives the total lottery balance (sum of all ticket prices minus fees). The participants list and lottery balance are then reset for the next round.
+
+### Admin Can Withdraw Fees
+The contract owner can withdraw the accumulated fees by calling the `admin_withdraw_fees` function.
 
 ## Quickstart
 
@@ -39,10 +45,6 @@ mox test
 ```
 
 ## Plan to implement the following features:
-- have a function `pick_winner` that can be called by the contract owner to pick a random winner from the participants
-- winner receives the sum of all fees entered by other participants, minus a small fee for the contract owner
-- initially, use weak randomness (blockhash) to pick a winner
 - replace with Chainlink VRF later
-- display most recent winner and their winnings
 
 _For documentation, please run `mox --help` or visit [the Moccasin documentation](https://cyfrin.github.io/moccasin)_

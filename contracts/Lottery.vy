@@ -57,7 +57,6 @@ def enter_lottery():
     # add the sender to the participants list
     self.participants.append(msg.sender)
 
-    pass
 
 @external
 def pick_winner():
@@ -85,12 +84,15 @@ def pick_winner():
     self._reset_lottery(_winner, _winning_amount)
 
 
+@external
 def admin_withdraw_fees():
     """
     @notice Withdraw the accumulated fees by the contract owner.
     @dev This function can only be called by the contract owner.
     """
-    pass
+    assert msg.sender == owner, "Only owner can withdraw fees"
+    raw_call(owner, b"", value=self.accumulated_fees)
+    self.accumulated_fees = 0
 
 
 @external
