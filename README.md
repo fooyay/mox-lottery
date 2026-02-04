@@ -32,15 +32,26 @@ The contract owner can withdraw the accumulated fees by calling the `admin_withd
 
 ## Quickstart
 
-1. Deploy to a fake local network that titanoboa automatically spins up!
+### Python dependencies
+```bash
+uv sync
+```
+
+### Moccasin dependencies
+```bash
+mox install
+```
+### Deployment
+Deploy to a fake local network that titanoboa automatically spins up!
 
 ```bash
 mox run deploy
 ```
 
-2. Run tests
+### Tests
+Run tests
 
-```
+```bash
 mox test
 ```
 
