@@ -4,10 +4,14 @@ version = "0.1.0"
 description = "A basic lottery smart contract, built using Vyper and Moccasin."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "mamushi>=0.1.0",
+    "moccasin>=0.4.3",
+]
 
 [tool.moccasin.project]
 src = "contracts"
+dependencies = ["snekmate"]
 
 [tool.moccasin.networks.pyevm]
 is_zksync = false

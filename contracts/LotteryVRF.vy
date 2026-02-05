@@ -3,8 +3,14 @@
 @license MIT
 @title Lottery Contract
 @author Sean Coates
-@notice This contract creates and runs a simple lottery.
+@notice This contract creates and runs a simple lottery using VRF for randomness.
 """
+from .interfaces import VRFCoordinatorV2
+
+
+flag LotteryState:
+    OPEN
+    CALCULATING_WINNER
 
 ticket_price: public(immutable(uint256))
 fee: public(immutable(uint256))
@@ -14,20 +20,38 @@ accumulated_fees: uint256
 participants: public(DynArray[address, 1000])  # max 1000 participants per round
 lottery_balance: public(uint256)
 lottery_start_time: public(uint256)
-random_nonce: uint256
+lottery_state: public(LotteryState)
 
 last_winner: public(address)
 last_winning_amount: public(uint256)
 
+# VRF Configuration
+VRF_COORDINATOR: public(immutable(VRFCoordinatorV2))
+GAS_LANE: public(immutable(bytes32))
+SUBSCRIPTION_ID: public(immutable(uint64))
+REQUEST_CONFIRMATIONS: constant(uint16) = 3  # default is 3
+CALLBACK_GAS_LIMIT: immutable(uint32)
+NUM_WORDS: constant(uint32) = 1
+MAX_ARRAY_SIZE: constant(uint256) = 1
+
 
 @deploy
-def __init__(_ticket_price: uint256, _fee: uint256, _min_duration: uint256):
+def __init__(
+    _ticket_price: uint256,
+    _fee: uint256,
+    _min_duration: uint256,
+    subscription_id: uint64,
+    gas_lane: bytes32,
+    callback_gas_limit: uint32,
+    vrf_coordinator_v2: address,
+):
     """
     @notice Constructor to initialize the lottery contract.
     @param _ticket_price The price of a lottery ticket.
     @param _fee The fee taken from each ticket purchase.
     @param _min_duration The minimum duration before picking a winner.
     """
+    # Lottery configuration
     assert _min_duration >= 60  # at least 1 minute
     min_duration = _min_duration
     assert _ticket_price > 0
@@ -35,8 +59,18 @@ def __init__(_ticket_price: uint256, _fee: uint256, _min_duration: uint256):
     ticket_price = _ticket_price
     fee = _fee
     owner = msg.sender
+
+
+    # VRF setup
+    SUBSCRIPTION_ID = subscription_id
+    GAS_LANE = gas_lane
+    CALLBACK_GAS_LIMIT = callback_gas_limit
+    VRF_COORDINATOR = VRFCoordinatorV2(vrf_coordinator_v2)
+
+    # Lottery setup
     self.accumulated_fees = 0
     self.lottery_start_time = block.timestamp
+    self.lottery_state = LotteryState.OPEN
 
 
 @payable
@@ -47,6 +81,9 @@ def enter_lottery():
     """
     # check if the sent value is equal to the ticket price, else revert
     assert msg.value == ticket_price, "Incorrect ticket price sent"
+    assert (
+        self.lottery_state == LotteryState.OPEN
+    ), "Lottery is not open, we are picking a winner. Try again later."
 
     # increment accumulated fees
     self.accumulated_fees += fee
@@ -70,17 +107,37 @@ def pick_winner():
         block.timestamp >= self.lottery_start_time + min_duration
     ), "Not enough time has passed"
 
-    # randomly select a winner from the participants
-    winner_index: uint256 = self._get_random_number(len(self.participants))
+    # request randomness from VRF
+    self.lottery_state = LotteryState.CALCULATING_WINNER
+    request_id: uint256 = extcall VRF_COORDINATOR.requestRandomWords(
+        GAS_LANE,
+        SUBSCRIPTION_ID,
+        REQUEST_CONFIRMATIONS,
+        CALLBACK_GAS_LIMIT,
+        NUM_WORDS,
+    )
 
-    _winner: address = self.participants[winner_index]
+@external
+def rawFulfillRandomWords(requestId: uint256, randomWords: DynArray[uint256, MAX_ARRAY_SIZE]):
+    """
+    @notice Callback function used by VRF Coordinator to return the random number.
+    @param requestId The Id of the randomness request.
+    @param randomWords The array of random words returned by VRF.
+    """
+    assert (
+        msg.sender == VRF_COORDINATOR.address
+    ), "Only VRFCoordinator can fulfill"
+    winner_index: uint256 = randomWords[0] % len(self.participants)
+
+    self._calculate_winner(winner_index)
+    
+
+def _calculate_winner(_index: uint256):
+    _winner: address = self.participants[_index]
     _winning_amount: uint256 = self.lottery_balance
 
-    # send the winnings to the winner minus the fee
+    # send the winnings to the winner and reset the lottery
     self._send_winnings(_winner, _winning_amount)
-    # reset the participants list for the next round
-    # reset the lottery balance
-
     self._reset_lottery(_winner, _winning_amount)
 
 
@@ -143,12 +200,11 @@ def _get_random_number(limit: uint256) -> uint256:
     @param limit The upper limit for the random number.
     @return A pseudo-random number between 0 and limit - 1.
     """
-    self.random_nonce += 1
     n: bytes32 = keccak256(
         concat(
             convert(block.timestamp, bytes32),
             convert(block.number, bytes32),
-            convert(self.random_nonce, bytes32),
+            convert(0, bytes32),
             convert(msg.sender, bytes32),
         )
     )

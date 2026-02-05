@@ -56,6 +56,6 @@ mox test
 ```
 
 ## Plan to implement the following features:
-- replace with Chainlink VRF later
+- replace with Chainlink VRF later. Note, some code related to VRF is already in place but not fully implemented.
 
 _For documentation, please run `mox --help` or visit [the Moccasin documentation](https://cyfrin.github.io/moccasin)_
